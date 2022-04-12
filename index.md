@@ -45,3 +45,46 @@ wild_lands.plot(color='lightgreen', ax=ax)
 campsites.plot(color='maroon', markersize=2, ax=ax)
 trails.plot(color='black', markersize=1, ax=ax)
 ```
+
+## [Coordinate Reference Systems](https://www.kaggle.com/code/alexisbcook/coordinate-reference-systems)
+**Coordinate reference systems (CRS)** show how the projected points correspond to real locations on Earth.
+
+### Setting the CRS
+In setting the CRS, we first create a Pandas DataFrame from a CSV file using `pd.read_csv()`. Then, we convert the Pandas DataFrame to a GeoPandas GeoDataFrame using `gpd.GeoDataFrame()`. From the columns containing latitude and longitude coordinates, we can create geometry (e.g., points) using `gpd.points_from_xy()`. Finally, we can set the appropriate CRS.
+```python
+import geopandas as gpd
+import pandas as pd
+
+# Create a DataFrame with health facilities in Ghana
+facilities_df = pd.read_csv("../input/geospatial-learn-course-data/ghana/ghana/health_facilities.csv")
+
+# Convert the DataFrame to a GeoDataFrame
+facilities = gpd.GeoDataFrame(facilities_df, geometry=gpd.points_from_xy(facilities_df.Longitude, facilities_df.Latitude))
+
+# Set the coordinate reference system (CRS) to EPSG 4326
+facilities.crs = {'init': 'epsg:4326'}
+```
+
+### Re-Projecting
+Sometimes, we have to deal with data that already has an existing CRS. When plotting multiple GeoDataFrames, it's important that they all use the same CRS. Changing the CRS is what we call **re-projecting** and we do this using the `to_crs()` method. The `to_crs()` method modifies only the "geometry" column: all other columns are left as-is.
+```python
+# Create a map
+ax = regions.plot(figsize=(8,8), color='whitesmoke', linestyle=':', edgecolor='black')
+facilities.to_crs(epsg=32630).plot(markersize=1, ax=ax)
+```
+
+### Attributes of geometric objects
+All three types of geometric objects (i.e., points, lines, polygons) have built-in attributes that you can use to quickly analyze the dataset.
+```python
+# Get the x-coordinate of each point
+facilities.geometry.head().x
+
+# Calculate the area (in square meters) of each polygon in the GeoDataFrame 
+regions.loc[:, "AREA"] = regions.geometry.area / 10**6
+
+print("Area of Ghana: {} square kilometers".format(regions.AREA.sum()))
+print("CRS:", regions.crs)
+regions.head()
+```
+
+## Interactive Maps
